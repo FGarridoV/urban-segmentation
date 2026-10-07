@@ -1,0 +1,8 @@
+torch>=2.0.0
+torchvision
+transformers
+pillow
+pandas
+tqdm
+opencv-python
+requests
