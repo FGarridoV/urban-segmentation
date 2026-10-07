@@ -13,7 +13,8 @@ def get_device():
 def get_optimal_batch_size(device):
     """Returns a conservative default batch size based on hardware."""
     if device == "cuda":
-        return 8
+        # RTX 2080 Ti has 11GB VRAM. Swin-Large is heavy, so 4 is safer.
+        return 4
     elif device == "mps":
         return 4
     return 1
