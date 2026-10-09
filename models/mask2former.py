@@ -19,12 +19,15 @@ class Mask2Former(SemanticSegmenter):
         self.model.eval()
         
     def process_batch(self, image_paths: List[str]) -> List[Dict[str, float]]:
+        import gc
+        
         images = []
         target_sizes = []
         for path in image_paths:
-            img = Image.open(path).convert("RGB")
-            images.append(img)
-            target_sizes.append(img.size[::-1]) # (height, width)
+            with Image.open(path) as f:
+                img = f.convert("RGB")
+                images.append(img)
+                target_sizes.append(img.size[::-1]) # (height, width)
             
         inputs = self.processor(images=images, return_tensors="pt").to(self.device)
         
@@ -49,5 +52,18 @@ class Mask2Former(SemanticSegmenter):
                 class_areas[label_name] = area_percent
                 
             batch_results.append(class_areas)
+            
+        # --- PREVENCIÓN CRÍTICA DE FUGAS DE MEMORIA (RAM Y VRAM) ---
+        del inputs
+        del outputs
+        del results
+        del images
+        
+        if self.device == "cuda":
+            torch.cuda.empty_cache()
+        elif self.device == "mps":
+            torch.mps.empty_cache()
+            
+        gc.collect()
             
         return batch_results
